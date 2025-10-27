@@ -1,114 +1,132 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Spline from '@splinetool/react-spline';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { TextPlugin } from 'gsap/TextPlugin';
 
-// Register GSAP plugins once
-if (typeof window !== 'undefined' && gsap && !gsap.core.globals()._flamesRegistered) {
-  gsap.registerPlugin(ScrollTrigger, TextPlugin);
-  // mark to avoid re-register
-  // @ts-ignore
-  gsap.core.globals()._flamesRegistered = true;
+// Lightweight text scramble effect without external deps
+function useScramble(targetText, { speed = 18, characters = '!<>-_\/[]{}—=+*^?#________', delay = 0 } = {}) {
+  const [text, setText] = useState('');
+  const frameRef = useRef(0);
+  const queueRef = useRef([]);
+  const resolveRef = useRef(null);
+
+  const set = (newText) => {
+    const from = text;
+    const length = Math.max(from.length, newText.length);
+    const queue = [];
+    for (let i = 0; i < length; i++) {
+      const fromChar = from[i] || '';
+      const toChar = newText[i] || '';
+      const start = Math.floor(Math.random() * speed);
+      const end = start + Math.floor(Math.random() * speed) + speed;
+      queue.push({ from: fromChar, to: toChar, start, end });
+    }
+    queueRef.current = queue;
+
+    cancelAnimationFrame(frameRef.current);
+    let frame = 0;
+    const update = () => {
+      let output = '';
+      let complete = 0;
+      for (let i = 0; i < queue.length; i++) {
+        let { from, to, start, end, char } = queue[i];
+        if (frame >= end) {
+          complete++;
+          output += to;
+        } else if (frame >= start) {
+          if (!char || Math.random() < 0.28) {
+            char = characters[Math.floor(Math.random() * characters.length)];
+            queue[i].char = char;
+          }
+          output += char;
+        } else {
+          output += from;
+        }
+      }
+      setText(output);
+      if (complete === queue.length) {
+        if (resolveRef.current) resolveRef.current();
+      } else {
+        frameRef.current = requestAnimationFrame(update);
+        frame++;
+      }
+    };
+    if (delay) {
+      setTimeout(() => {
+        frameRef.current = requestAnimationFrame(update);
+      }, delay);
+    } else {
+      frameRef.current = requestAnimationFrame(update);
+    }
+
+    return new Promise((res) => {
+      resolveRef.current = res;
+    });
+  };
+
+  useEffect(() => {
+    return () => cancelAnimationFrame(frameRef.current);
+  }, []);
+
+  return { text, set };
 }
 
-const terms = ['Websites', 'Web Apps', 'Dashboards', 'eCommerce', 'APIs'];
-
 export default function Hero() {
-  const titleRef = useRef(null);
-  const flipRef = useRef(null);
-  const badgesRef = useRef(null);
-  const prefersReduced = useMemo(() =>
-    typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-  []);
+  const headline = 'We build products that ship.';
+  const { text, set } = useScramble('', { speed: 16, delay: 150 });
 
   useEffect(() => {
-    if (!titleRef.current) return;
+    set(headline);
+  }, []); // run once on mount
 
-    if (!prefersReduced) {
-      gsap.fromTo(
-        titleRef.current,
-        { text: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxx' },
-        { text: 'We build products that ship.', duration: 1.2, ease: 'power2.out', delay: 0.3 }
-      );
-    }
-  }, [prefersReduced]);
-
+  // Sub copy cycling (gentle)
+  const terms = useMemo(
+    () => ['fast', 'accessible', 'robust', 'beautiful'],
+    []
+  );
+  const [termIndex, setTermIndex] = useState(0);
   useEffect(() => {
-    if (!flipRef.current) return;
-    if (prefersReduced) {
-      flipRef.current.textContent = terms[0];
-      return;
-    }
-
-    let idx = 0;
-    const el = flipRef.current;
-    const cycle = () => {
-      const next = terms[idx % terms.length];
-      const tl = gsap.timeline();
-      tl.to(el, { yPercent: -100, opacity: 0, duration: 0.3, ease: 'power2.in' })
-        .call(() => { el.textContent = next; })
-        .set(el, { yPercent: 100 })
-        .to(el, { yPercent: 0, opacity: 1, duration: 0.4, ease: 'power2.out' });
-      idx += 1;
-    };
-
-    cycle();
-    const id = setInterval(cycle, 2000);
+    const id = setInterval(() => setTermIndex((i) => (i + 1) % terms.length), 2200);
     return () => clearInterval(id);
-  }, [prefersReduced]);
-
-  useEffect(() => {
-    if (!badgesRef.current) return;
-    if (prefersReduced) return;
-
-    gsap.from(badgesRef.current.children, {
-      opacity: 0,
-      y: 16,
-      stagger: 0.08,
-      duration: 0.5,
-      ease: 'power2.out',
-      scrollTrigger: {
-        trigger: badgesRef.current,
-        start: 'top 85%'
-      }
-    });
-  }, [prefersReduced]);
+  }, [terms.length]);
 
   return (
-    <section className="relative min-h-[92vh] w-full overflow-hidden bg-[#0B0B0B] text-[#F5F5F5]">
+    <section id="home" className="relative min-h-[92vh] flex items-center">
+      {/* Spline background cover */}
       <div className="absolute inset-0">
-        <Spline scene="https://prod.spline.design/LU2mWMPbF3Qi1Qxh/scene.splinecode" style={{ width: '100%', height: '100%' }} />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/80" />
+        <Spline
+          scene="https://prod.spline.design/BWzdo650n-g-M9RS/scene.splinecode"
+          style={{ width: '100%', height: '100%' }}
+        />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-4 pt-28 pb-24 flex flex-col items-start">
-        <h1 ref={titleRef} className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight tracking-tight">
-          We build products that ship.
-        </h1>
-        <p className="mt-4 text-lg sm:text-xl text-[#F5F5F5]/80">
-          <span className="sr-only">Full-stack web development for teams that can’t miss deadlines.</span>
-          <span aria-hidden="true" className="inline-flex h-7 sm:h-8 items-center overflow-hidden align-baseline">
-            <span ref={flipRef} className="inline-block will-change-transform">Websites</span>
-          </span>
-          <span className="ml-2">for teams that can’t miss deadlines.</span>
-        </p>
+      {/* Soften background with subtle dark gradients to reduce visual noise */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0)_0%,rgba(0,0,0,0.35)_55%,rgba(0,0,0,0.7)_100%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/70" />
 
-        <div className="mt-8 flex flex-col sm:flex-row items-stretch gap-3">
-          <a href="#booking" className="group inline-flex items-center justify-center rounded-lg px-6 py-3 font-semibold bg-[#FFC400] text-black hover:bg-[#FFB000] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD84D]">
-            Book a Call
-          </a>
-          <a href="#work" className="inline-flex items-center justify-center rounded-lg px-6 py-3 font-semibold border border-[#FFC400] text-[#FFC400] hover:bg-[#FFC400]/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD84D]">
-            View Portfolio
-          </a>
-        </div>
+      <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-28">
+        <div className="max-w-3xl">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-[#F5F5F5] leading-tight">
+            <span className="block">
+              {text}
+            </span>
+          </h1>
+          <p className="mt-5 text-base sm:text-lg text-white/80">
+            We ship {terms[termIndex]} web apps for teams that care about speed, DX, and outcomes.
+          </p>
 
-        <div className="mt-10 flex items-center gap-6 opacity-90" ref={badgesRef}>
-          {['Acme', 'NovaBank', 'Pixelly', 'Therma', 'Flowbyte'].map((b) => (
-            <div key={b} className="text-xs sm:text-sm text-[#F5F5F5]/60 grayscale hover:grayscale-0 transition">
-              {b}
-            </div>
-          ))}
+          <div className="mt-8 flex flex-col sm:flex-row gap-3">
+            <a
+              href="#book"
+              className="inline-flex items-center justify-center rounded-full bg-[#FFC400] px-5 py-3 text-sm font-medium text-black hover:bg-[#FFB000] transition"
+            >
+              Book a Call
+            </a>
+            <a
+              href="#work"
+              className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-5 py-3 text-sm font-medium text-white hover:bg-white/10 transition"
+            >
+              View Work
+            </a>
+          </div>
         </div>
       </div>
     </section>

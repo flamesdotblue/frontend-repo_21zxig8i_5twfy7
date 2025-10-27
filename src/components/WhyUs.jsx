@@ -1,65 +1,47 @@
-import { Rocket, Shield, Zap } from 'lucide-react';
-import { useEffect, useRef } from 'react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-if (typeof window !== 'undefined' && gsap && !gsap.core.globals()._flamesWU) {
-  gsap.registerPlugin(ScrollTrigger);
-  // @ts-ignore
-  gsap.core.globals()._flamesWU = true;
-}
+import { Shield, Zap, Star } from 'lucide-react';
 
 const items = [
   {
-    icon: Rocket,
-    title: 'Velocity',
-    desc: 'Ship faster with opinionated systems, automation, and relentless focus on outcomes.',
+    icon: Zap,
+    title: 'Speed without tradeoffs',
+    desc: 'We move fast and keep quality high with robust tooling, reviews, and playbooks.'
   },
   {
     icon: Shield,
-    title: 'Reliability',
-    desc: 'Battle-tested patterns, robust QA, and observability to keep you online.',
+    title: 'Production-first',
+    desc: 'Design, build, and deploy with observability and performance from day one.'
   },
   {
-    icon: Zap,
-    title: 'Performance',
-    desc: 'Lighthouse 95+ targets out of the box. We sweat the milliseconds.',
-  },
+    icon: Star,
+    title: 'Outcomes > outputs',
+    desc: 'Measurable impact: conversions, retention, and reliability — not just pixels.'
+  }
 ];
 
 export default function WhyUs() {
-  const wrapRef = useRef(null);
-
-  useEffect(() => {
-    const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (!wrapRef.current || prefersReduced) return;
-    gsap.from(wrapRef.current.children, {
-      opacity: 0,
-      y: 24,
-      duration: 0.6,
-      ease: 'power2.out',
-      stagger: 0.12,
-      scrollTrigger: { trigger: wrapRef.current, start: 'top 85%' },
-    });
-  }, []);
-
   return (
-    <section id="why" className="bg-[#0B0B0B] text-[#F5F5F5]">
-      <div className="mx-auto max-w-7xl px-4 py-20">
-        <div className="mb-10">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight">Why choose us</h2>
-          <p className="mt-2 text-[#F5F5F5]/70 max-w-2xl">Performance, Reliability, Velocity — the pillars behind everything we build.</p>
+    <section id="why" className="relative bg-[#0B0B0B] py-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="max-w-2xl">
+          <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-[#F5F5F5]">
+            Why teams choose us
+          </h2>
+          <p className="mt-3 text-white/70">
+            Focused on reliability, speed, and a clean developer experience.
+          </p>
         </div>
-        <div ref={wrapRef} className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {items.map(({ icon: Icon, title, desc }) => (
-            <div key={title} className="group rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-6 transition-transform will-change-transform hover:-translate-y-1 hover:shadow-[0_10px_40px_-10px_rgba(255,196,0,0.25)]">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-md bg-[#FFC400] text-black">
-                  <Icon size={20} />
-                </div>
-                <h3 className="text-lg font-semibold">{title}</h3>
+            <div
+              key={title}
+              className="group rounded-xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent p-6 transition hover:border-white/20 hover:from-white/[0.06]"
+            >
+              <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[#FFC400] text-black">
+                <Icon size={18} />
               </div>
-              <p className="mt-3 text-sm text-[#F5F5F5]/75">{desc}</p>
+              <h3 className="mt-4 text-lg font-medium text-[#F5F5F5]">{title}</h3>
+              <p className="mt-2 text-sm text-white/70">{desc}</p>
             </div>
           ))}
         </div>
